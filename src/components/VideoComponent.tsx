@@ -247,8 +247,8 @@ export function VideoComponent({ highlight, spoilersOn = false, autoPlay = false
 
         {/* Controls */}
         <div className="absolute top-2 right-2 flex gap-2 z-30">
-          {/* Custom full-screen button - only show when spoilers are on */}
-          {spoilersOn && (
+          {/* Custom full-screen button - only show on desktop when spoilers are on */}
+          {spoilersOn && !isMobile && (
             <button
               onClick={handleCustomFullscreen}
               className="p-2 rounded-full bg-black bg-opacity-70 hover:bg-opacity-90 transition-all text-white"
