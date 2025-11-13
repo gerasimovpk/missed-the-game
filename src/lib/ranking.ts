@@ -2,10 +2,8 @@ import { Highlight } from '@/redux/services/scorebatApi';
 import { 
   isDerby, 
   getCompetitionWeight, 
-  TOP_COMPETITIONS, 
   isTopCompetition,
-  getMatchWeight,
-  getClubWeight
+  getMatchWeight
 } from './topClubs';
 
 // Score a highlight based on club weights and other criteria

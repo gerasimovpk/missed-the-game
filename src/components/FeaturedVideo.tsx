@@ -36,7 +36,9 @@ export function FeaturedVideo({ item, spoilersOn }: FeaturedVideoProps) {
   };
 
   const maskedTitle = spoilersOn ? maskScores(item.title) : item.title;
-  const maskedDescription = spoilersOn && item.description ? maskScores(item.description) : item.description;
+  const maskedDescription = item.description 
+    ? (spoilersOn ? maskScores(item.description) : item.description)
+    : undefined;
 
   const isTopGame = item.isTopGame;
   const isHighScore = item.isHighScore;
