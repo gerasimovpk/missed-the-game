@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Highlight } from '@/redux/services/scorebatApi';
 import { trackHighlightWatch10s } from '@/lib/ga4';
 import { EyeOff, X, Share2, Maximize, Minimize } from 'lucide-react';
@@ -17,6 +17,18 @@ export function VideoComponent({ highlight, spoilersOn = false, autoPlay = false
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [isLoadingVideoUrl, setIsLoadingVideoUrl] = useState(true);
   const [isCustomFullscreen, setIsCustomFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Fetch video URL from backend with embed token
   useEffect(() => {
@@ -104,17 +116,83 @@ export function VideoComponent({ highlight, spoilersOn = false, autoPlay = false
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [isCustomFullscreen]);
 
-  const handleCustomFullscreen = () => {
-    setIsCustomFullscreen(!isCustomFullscreen);
+  const handleCustomFullscreen = async () => {
+    if (isMobile) {
+      // On mobile, use native fullscreen
+      const iframe = iframeRef.current || (document.querySelector('iframe[title*="vs"]') as HTMLIFrameElement);
+      if (iframe) {
+        try {
+          if (iframe.requestFullscreen) {
+            await iframe.requestFullscreen();
+          } else if ((iframe as any).webkitEnterFullscreen) {
+            // iOS Safari
+            (iframe as any).webkitEnterFullscreen();
+          } else if ((iframe as any).mozRequestFullScreen) {
+            await (iframe as any).mozRequestFullScreen();
+          } else if ((iframe as any).msRequestFullscreen) {
+            await (iframe as any).msRequestFullscreen();
+          }
+        } catch (error) {
+          console.error('Error entering fullscreen:', error);
+          // Fallback to custom fullscreen on mobile if native fails
+          setIsCustomFullscreen(!isCustomFullscreen);
+        }
+      } else {
+        // Fallback to custom fullscreen
+        setIsCustomFullscreen(!isCustomFullscreen);
+      }
+    } else {
+      // Desktop: use custom fullscreen
+      setIsCustomFullscreen(!isCustomFullscreen);
+    }
   };
 
   const handleExitCustomFullscreen = () => {
+    if (isMobile) {
+      // Exit native fullscreen on mobile
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else if ((document as any).webkitFullscreenElement) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozFullScreenElement) {
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).msFullscreenElement) {
+        (document as any).msExitFullscreen();
+      }
+    }
     setIsCustomFullscreen(false);
   };
 
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
+      if (!isFullscreen && isMobile) {
+        setIsCustomFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, [isMobile]);
+
   return (
-    <div className={`${isCustomFullscreen ? 'fixed inset-0 bg-black z-50' : 'fixed inset-0 bg-black flex items-center justify-center z-50 p-4'}`}>
-      <div className={`relative bg-gray-900 rounded-lg overflow-hidden shadow-2xl ${isCustomFullscreen ? 'w-full h-full' : 'w-full max-w-6xl'}`}>
+    <div className={`${isCustomFullscreen && !isMobile ? 'fixed inset-0 bg-black z-50' : 'fixed inset-0 bg-black flex items-center justify-center z-50 p-4'}`}>
+      <div className={`relative bg-gray-900 rounded-lg overflow-hidden shadow-2xl ${isCustomFullscreen && !isMobile ? 'w-full h-full' : isMobile ? 'w-full max-w-full' : 'w-full max-w-6xl'}`}>
 
         {/* Scorebat video widget iframe */}
         <div className="relative w-full aspect-video">
@@ -128,10 +206,11 @@ export function VideoComponent({ highlight, spoilersOn = false, autoPlay = false
           ) : videoUrl ? (
             <>
               <iframe
+                ref={iframeRef}
                 src={videoUrl}
                 className="absolute inset-0 w-full h-full"
                 frameBorder="0"
-                allowFullScreen={!spoilersOn}
+                allowFullScreen={true}
                 allow={spoilersOn ? "autoplay; picture-in-picture" : "autoplay; fullscreen; picture-in-picture"}
                 title={`${highlight.homeTeam} vs ${highlight.awayTeam}`}
               />

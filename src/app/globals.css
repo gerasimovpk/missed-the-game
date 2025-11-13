@@ -20,9 +20,13 @@
 }
 
 body {
-  background: var(--background);
+  background: #ffffff;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+html {
+  background: #ffffff;
 }
 
 /* Hide scrollbar for horizontal scrolling on mobile */

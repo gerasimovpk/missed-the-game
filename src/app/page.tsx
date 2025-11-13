@@ -17,6 +17,7 @@ import { useGetAggregatedHighlightsQuery } from '@/redux/services/scorebatApi';
 export default function Home() {
   const { isOn: spoilersOn } = useSelector((state: RootState) => state.spoiler);
   const [selectedCompetition, setSelectedCompetition] = useState<string>('');
+  const [showHeaderTitle, setShowHeaderTitle] = useState(false);
   
   // Use the new aggregated highlights query
   const { data: aggregatedData, isLoading, error } = useGetAggregatedHighlightsQuery();
@@ -102,6 +103,24 @@ export default function Home() {
     }
   }, []);
 
+  // Show header title when hero section is scrolled out of view
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroSection = document.getElementById('hero-section');
+      if (heroSection) {
+        const rect = heroSection.getBoundingClientRect();
+        // Show header title when hero section is scrolled up (not visible)
+        setShowHeaderTitle(rect.bottom < 0);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Check initial state
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
@@ -125,13 +144,15 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-gray-900">Missed The Game</h1>
+              {showHeaderTitle && (
+                <h1 className="text-xl font-bold text-gray-900">Missed The Game</h1>
+              )}
             </div>
             <SpoilerToggle />
           </div>
@@ -139,7 +160,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8">
+      <section className="py-8 px-4 sm:px-6 lg:px-8" id="hero-section">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
             Missed The Game
@@ -166,7 +187,8 @@ export default function Home() {
       {top5.length > 0 && (
         <section className="px-4 sm:px-6 lg:px-8 mb-12">
           <div className="max-w-7xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">Top Matches</h3>
+            {/* Title hidden for now */}
+            {false && <h3 className="text-2xl font-bold text-gray-900 mb-6">Top Matches</h3>}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
               {top5.map((highlight, index) => (
                 <React.Fragment key={highlight.id}>
@@ -224,15 +246,6 @@ export default function Home() {
           </div>
         </section>
       )}
-
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <p className="text-gray-400">
-            © {new Date().getFullYear()} Missed The Game. Watch football highlights without spoilers.
-          </p>
-        </div>
-      </footer>
 
       {/* UI Components */}
       <CookieBanner />

@@ -14,6 +14,9 @@ interface FeaturedVideoProps {
 }
 
 export function FeaturedVideo({ item, spoilersOn }: FeaturedVideoProps) {
+  // Hidden for now - return null to hide the component
+  return null;
+  
   const [isHovering, setIsHovering] = useState(false);
   const router = useRouter();
 

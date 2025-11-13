@@ -37,7 +37,7 @@ export function DonationCard() {
   const handleDonateClick = () => {
     trackDonationClicked('bmac');
     
-    const bmacProfile = process.env.NEXT_PUBLIC_BMAC_PROFILE || 'missedthegame';
+    const bmacProfile = process.env.NEXT_PUBLIC_BMAC_PROFILE || 'gerasimovpb';
     const returnUrl = process.env.NEXT_PUBLIC_DONATION_RETURN_URL || window.location.origin + '/thanks';
     
     // Open Buy Me a Coffee in new tab
@@ -82,7 +82,7 @@ export function DonationCard() {
           {/* Button moved to top area */}
           <button
             onClick={(e) => { e.stopPropagation(); handleDonateClick(); }}
-            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm mx-auto"
+            className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2 whitespace-nowrap text-sm mx-auto cursor-pointer"
           >
             <Coffee className="w-4 h-4" />
             Buy Me a Coffee

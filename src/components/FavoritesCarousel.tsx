@@ -5,6 +5,9 @@ import { RootState } from '@/redux/store';
 import { Star, Plus } from 'lucide-react';
 
 export function FavoritesCarousel() {
+  // Hidden for now - return null to hide the component
+  return null;
+  
   const { favorites } = useSelector((state: RootState) => state.favorites);
   const { user } = useSelector((state: RootState) => state.user);
 
