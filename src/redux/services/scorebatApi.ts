@@ -86,7 +86,7 @@ const normalizeHighlight = (item: ScorebatResponse['response'][0]): Highlight[] 
 export const scorebatApi = createApi({
   reducerPath: 'scorebatApi',
   baseQuery: fetchBaseQuery({
-    baseUrl: typeof window !== 'undefined' ? `${window.location.origin.replace(':3000', ':8787')}/` : 'http://localhost:8787/',
+    baseUrl: process.env.NEXT_PUBLIC_SCOREBAT_PROXY_URL || 'http://localhost:8787/',
     prepareHeaders: (headers) => {
       headers.set('Accept', 'application/json');
       return headers;

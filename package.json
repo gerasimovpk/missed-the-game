@@ -9,8 +9,8 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
-    "worker:dev": "wrangler dev --port 8787",
-    "worker:deploy": "wrangler deploy"
+    "worker:dev": "cd cloudflare-worker && wrangler dev --port 8787",
+    "worker:deploy": "cd cloudflare-worker && wrangler deploy"
   },
   "dependencies": {
     "@mailchimp/mailchimp_marketing": "^3.0.80",
@@ -50,6 +50,6 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^3.2.4",
-    "wrangler": "^4.45.1"
+    "wrangler": "^4.48.0"
   }
 }

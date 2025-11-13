@@ -1,8 +1,13 @@
 // Cloudflare Worker for Scorebat API proxy with CORS and caching
+
+// Environment interface for TypeScript
+interface Env {
+  SCOREBAT_TOKEN: string;
+  SCOREBAT_EMBED_TOKEN: string;
+}
+
 const SCOREBAT_API_URL = 'https://www.scorebat.com/video-api/v3/';
-const SCOREBAT_TOKEN = 'MjQ0NzkzXzE3NjE2NjY4NThfZGQ0YjgzNjA4N2VlMzY4NTg2MWNiZThiOWEyOGIzNmI4NzFkNDRjZA==';
-const SCOREBAT_EMBED_TOKEN = 'MjQ0NzkzXzE3NjE2ODAzMzhfMDlmOTA0MTQ0N2YyZWM1ZjU3ZWU3ZDk0M2U0Y2I2YWMzMDJjNGM5Nw==';
-const CACHE_TTL = 60 * 60 * 24 * 10; // 1 hour in seconds -> 10 days, to save on API calls
+const CACHE_TTL = 60 * 60; // 1 hour in seconds
 
 // Top competitions to fetch
 const TOP_COMPETITIONS = [
@@ -23,7 +28,7 @@ const TOP_COMPETITIONS = [
 ];
 
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -48,22 +53,22 @@ export default {
       
               // Handle aggregated highlights endpoint
               if (endpoint === 'highlights') {
-                return await handleAggregatedHighlights(request);
+                return await handleAggregatedHighlights(request, env);
               }
               
               // Handle video URL generation with embed token
               if (endpoint === 'video-url') {
-                return await handleVideoUrl(request);
+                return await handleVideoUrl(request, env);
               }
               
               // Debug endpoint to test individual competitions
               if (endpoint === 'debug') {
-                return await handleDebugEndpoint(request);
+                return await handleDebugEndpoint(request, env);
               }
       
       // Handle individual competition endpoints (for backward compatibility)
       if (endpoint.startsWith('competition/')) {
-        return await handleCompetitionEndpoint(request, endpoint);
+        return await handleCompetitionEndpoint(request, endpoint, env);
       }
       
       return new Response('Endpoint not found', { 
@@ -85,8 +90,8 @@ export default {
   },
 };
 
-async function handleAggregatedHighlights(request: Request): Promise<Response> {
-  const cache = caches.default;
+async function handleAggregatedHighlights(request: Request, env: Env): Promise<Response> {
+  const cache = (caches as any).default;
   
   // Check for cache busting parameter
   const url = new URL(request.url);
@@ -116,13 +121,13 @@ async function handleAggregatedHighlights(request: Request): Promise<Response> {
   console.log('Fetching fresh aggregated highlights');
   
   // Fetch data from all top competitions
-  const allHighlights = [];
-  const competitionData = [];
+  const allHighlights: any[] = [];
+  const competitionData: any[] = [];
   
   for (const competitionId of TOP_COMPETITIONS) {
     try {
       console.log(`🔄 Fetching ${competitionId}...`);
-      const apiUrl = `${SCOREBAT_API_URL}competition/${competitionId}/?token=${SCOREBAT_TOKEN}`;
+      const apiUrl = `${SCOREBAT_API_URL}competition/${competitionId}/?token=${env.SCOREBAT_TOKEN}`;
       const response = await fetch(apiUrl);
       
       console.log(`📊 ${competitionId} - Status: ${response.status}, OK: ${response.ok}`);
@@ -199,7 +204,7 @@ async function handleAggregatedHighlights(request: Request): Promise<Response> {
   return response;
 }
 
-async function handleVideoUrl(request: Request): Promise<Response> {
+async function handleVideoUrl(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const videoId = url.searchParams.get('videoId');
   const autoplay = url.searchParams.get('autoplay') === 'true';
@@ -213,8 +218,19 @@ async function handleVideoUrl(request: Request): Promise<Response> {
     });
   }
   
+  if (!env.SCOREBAT_EMBED_TOKEN) {
+    console.error('SCOREBAT_EMBED_TOKEN is not set in environment variables');
+    return new Response('Server configuration error: embed token not set', { 
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+  
   const autoplayParam = autoplay ? '&autoplay=1' : '';
-  const videoUrl = `https://www.scorebat.com/embed/v/${videoId}/?token=${SCOREBAT_EMBED_TOKEN}&utm_source=api&utm_medium=video&utm_campaign=dffd${autoplayParam}`;
+  const videoUrl = `https://www.scorebat.com/embed/v/${videoId}/?token=${env.SCOREBAT_EMBED_TOKEN}&utm_source=api&utm_medium=video&utm_campaign=dffd${autoplayParam}`;
   
   return new Response(JSON.stringify({ videoUrl }), {
     status: 200,
@@ -225,12 +241,12 @@ async function handleVideoUrl(request: Request): Promise<Response> {
   });
 }
 
-async function handleDebugEndpoint(request: Request): Promise<Response> {
-  const results = [];
+async function handleDebugEndpoint(request: Request, env: Env): Promise<Response> {
+  const results: any[] = [];
   
   for (const competitionId of TOP_COMPETITIONS) {
     try {
-      const apiUrl = `${SCOREBAT_API_URL}competition/${competitionId}/?token=${SCOREBAT_TOKEN}`;
+      const apiUrl = `${SCOREBAT_API_URL}competition/${competitionId}/?token=${env.SCOREBAT_TOKEN}`;
       const response = await fetch(apiUrl);
       
       const result = {
@@ -269,9 +285,9 @@ async function handleDebugEndpoint(request: Request): Promise<Response> {
   });
 }
 
-async function handleCompetitionEndpoint(request: Request, endpoint: string): Promise<Response> {
-  const cache = caches.default;
-  const apiUrl = `${SCOREBAT_API_URL}${endpoint}/?token=${SCOREBAT_TOKEN}`;
+async function handleCompetitionEndpoint(request: Request, endpoint: string, env: Env): Promise<Response> {
+  const cache = (caches as any).default;
+  const apiUrl = `${SCOREBAT_API_URL}${endpoint}/?token=${env.SCOREBAT_TOKEN}`;
   const cacheKey = new Request(apiUrl, request);
   
   // Check cache first
