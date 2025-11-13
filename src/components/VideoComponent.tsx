@@ -35,7 +35,10 @@ export function VideoComponent({ highlight, spoilersOn = false, autoPlay = false
     const fetchVideoUrl = async () => {
       try {
         setIsLoadingVideoUrl(true);
-        const response = await fetch(`${window.location.origin.replace(':3000', ':8787')}/video-url?videoId=${highlight.id}&autoplay=${autoPlay}`);
+        // Use the Cloudflare Worker URL from environment variable
+        const proxyUrl = process.env.NEXT_PUBLIC_SCOREBAT_PROXY_URL || 
+          (typeof window !== 'undefined' ? `${window.location.origin.replace(':3000', ':8787')}` : 'http://localhost:8787');
+        const response = await fetch(`${proxyUrl}/video-url?videoId=${highlight.id}&autoplay=${autoPlay}`);
         if (response.ok) {
           const data = await response.json();
           setVideoUrl(data.videoUrl);

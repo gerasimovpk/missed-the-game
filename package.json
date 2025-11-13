@@ -9,8 +9,8 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
-    "worker:dev": "cd cloudflare-worker && wrangler dev --port 8787",
-    "worker:deploy": "cd cloudflare-worker && wrangler deploy"
+    "worker:dev": "wrangler dev --port 8787 --config cloudflare-worker/wrangler.toml",
+    "worker:deploy": "wrangler deploy --config cloudflare-worker/wrangler.toml"
   },
   "dependencies": {
     "@mailchimp/mailchimp_marketing": "^3.0.80",
