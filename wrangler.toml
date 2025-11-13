@@ -1,0 +1,9 @@
+name = "missed-the-game-proxy"
+main = "cloudflare-worker/index.ts"
+compatibility_date = "2024-01-01"
+
+[env.development]
+name = "missed-the-game-proxy-dev"
+
+[env.production]
+name = "missed-the-game-proxy-prod"

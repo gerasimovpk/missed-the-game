@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Cloudflare Worker",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/wrangler/wrangler-dist/cli.js",
+      "args": ["dev", "--port", "8787"],
+      "console": "integratedTerminal",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  ]
+}
